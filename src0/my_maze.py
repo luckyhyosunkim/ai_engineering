@@ -15,6 +15,16 @@ class StackFrontier():
     def add(self, node):
         self.frontier.append(node)
 
+    def empty(self):
+        return len(self.frontier) == 0
+
+    def remove(self):
+        if self.empty():
+            raise Exception("empty forntier")
+        node = self.frontier[-1]
+        self.frontier = self.frontier[:-1]
+        return node
+
 
 class Maze():
     def __init__(self, filename):
@@ -73,7 +83,29 @@ class Maze():
         frontier = StackFrontier()
         frontier.add(start)
 
-        print(self.num_explored)
+        self.explored = set()
+
+        while True:
+            if frontier.empty():
+                raise Exception("no solution")
+
+            node = frontier.remove()
+            self.num_explored += 1
+
+            if node.state == self.goal:
+                actions = []
+                cells = []
+                while node.parent is not None:
+                    actions.append(node.action)
+                    cells.append(node.cell)
+                    node = node.parent
+                actions.reverse()
+                cells.reverse()
+                print(actions, cells)
+                self.solution = (actions, cells)
+                return
+
+            self.explored.add(node.state)
 
 
 if (len(sys.argv)) != 2:
