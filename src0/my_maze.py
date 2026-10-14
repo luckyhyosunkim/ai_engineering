@@ -25,6 +25,9 @@ class StackFrontier():
         self.frontier = self.frontier[:-1]
         return node
 
+    def contains_state(self, state):
+        return any(node.state == state for node in self.frontier)
+
 
 class Maze():
     def __init__(self, filename):
@@ -76,6 +79,21 @@ class Maze():
                     print(" ", end="")
             print()
 
+    def neighbors(self, state):
+        row, col = state
+        candidates = [
+            ("up", (row - 1, col)),
+            ("down", (row + 1, col)),
+            ("left", (row, col - 1)),
+            ("right", (row, col + 1))
+        ]
+
+        result = []
+        for action, (r, c) in candidates:
+            if 0 <= r < self.height and 0 <= c < self.width and not self.walls[r][c]:
+                result.append((action, (r, c)))
+        return result
+
     def solve(self):
         self.num_explored = 0
 
@@ -97,7 +115,7 @@ class Maze():
                 cells = []
                 while node.parent is not None:
                     actions.append(node.action)
-                    cells.append(node.cell)
+                    cells.append(node.state)
                     node = node.parent
                 actions.reverse()
                 cells.reverse()
@@ -106,6 +124,11 @@ class Maze():
                 return
 
             self.explored.add(node.state)
+
+            for action, state in self.neighbors(node.state):
+                if not frontier.contains_state(state) and state not in self.explored:
+                    child = Node(state=state, parent=node, action=action)
+                    frontier.add(child)
 
 
 if (len(sys.argv)) != 2:
@@ -116,3 +139,4 @@ print("Maze:")
 m.print()
 print("Solving...")
 m.solve()
+print("States Explored:", m.num_explored)
