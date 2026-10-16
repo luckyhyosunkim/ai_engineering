@@ -29,6 +29,15 @@ class StackFrontier():
         return any(node.state == state for node in self.frontier)
 
 
+class QueueFrontier(StackFrontier):
+    def remove(self):
+        if self.empty():
+            raise Exception("empty forntier")
+        node = self.frontier[0]
+        self.frontier = self.frontier[1:]
+        return node
+
+
 class Maze():
     def __init__(self, filename):
         with open(filename) as f:
@@ -98,7 +107,8 @@ class Maze():
         self.num_explored = 0
 
         start = Node(state=self.start, parent=None, action=None)
-        frontier = StackFrontier()
+        # frontier = StackFrontier()
+        frontier = QueueFrontier()
         frontier.add(start)
 
         self.explored = set()
