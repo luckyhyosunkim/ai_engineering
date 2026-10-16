@@ -62,6 +62,15 @@
   .idea { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; }
   .idea div { background:var(--bg); border-radius:8px; padding:10px 12px; font-size:14px; }
   .idea b { display:block; margin-bottom:2px; }
+  .nbBoard { display:grid; gap:2px; width:fit-content; margin:0 auto; }
+  .nbBoard .c { cursor:pointer; width:36px; height:36px; }
+  .nbBoard .c.sel { background:var(--current); outline:3px solid var(--current); outline-offset:1px; color:#fff; }
+  .nbBoard .c.ok { background:#22c55e; color:#fff; }
+  .nbBoard .c.bad { box-shadow:inset 0 0 0 3px #ef4444; }
+  #nbTable { width:100%; border-collapse:collapse; font-size:14px; }
+  #nbTable td, #nbTable th { text-align:left; padding:5px 8px; border-bottom:1px solid var(--line); }
+  #nbTable .ok { color:#16a34a; font-weight:600; }
+  #nbTable .bad { color:#dc2626; }
   code { font:13px ui-monospace,monospace; background:var(--bg); padding:1px 5px; border-radius:4px; }
 </style>
 </head>
@@ -77,6 +86,28 @@
       <div><b>2. Take one out</b>Queue takes the <em>oldest</em> (BFS), Stack takes the <em>newest</em> (DFS).</div>
       <div><b>3. Goal? Done.</b>Otherwise mark it explored and add its non-wall, unseen neighbors (up, down, left, right).</div>
       <div><b>4. Trace back</b>Each Node remembers its <code>parent</code>, so from <code>B</code> we walk back to <code>A</code> for the path.</div>
+    </div>
+  </div>
+
+  <div class="card full">
+    <h2>neighbors(state): where can I go from here?</h2>
+    <p style="margin-top:0">Given a cell <code>(row, col)</code>, it builds 4 <b>candidates</b> (up, down, left, right) and keeps only those that pass two checks: inside the maze, and not a wall. <b>Click any cell</b> to try it.</p>
+    <div class="grid2">
+      <div>
+        <div id="nbBoard" class="nbBoard"></div>
+        <div class="legend">
+          <span><i style="background:var(--current)"></i>selected cell</span>
+          <span><i style="background:#22c55e"></i>valid neighbor</span>
+          <span><i style="background:#ef4444"></i>rejected</span>
+        </div>
+      </div>
+      <div>
+        <div class="lbl" style="margin-top:0">Candidates for <b id="nbSel"></b></div>
+        <table id="nbTable"></table>
+        <div class="lbl">The code</div>
+        <pre class="code"><span class="ln"><span class="n">92</span>row, col = state</span><span class="ln"><span class="n">93</span>candidates = [("up",    (row-1, col)),</span><span class="ln"><span class="n">94</span>              ("down",  (row+1, col)),</span><span class="ln"><span class="n">95</span>              ("left",  (row, col-1)),</span><span class="ln"><span class="n">96</span>              ("right", (row, col+1))]</span><span class="ln"><span class="n">101</span>for action, (r, c) in candidates:</span><span class="ln hl"><span class="n">102</span>    if 0 &lt;= r &lt; height and 0 &lt;= c &lt; width and not walls[r][c]:</span><span class="ln"><span class="n">103</span>        result.append((action, (r, c)))</span></pre>
+        <p style="font-size:13px;color:var(--muted)">Row 0 is the <em>top</em>, so "up" is <code>row - 1</code>. The <code>0 &lt;= r &lt; height</code> part must come first, so we never index <code>walls</code> out of range. <code>solve()</code> then adds only the neighbors it hasn't already seen.</p>
+      </div>
     </div>
   </div>
 
@@ -258,8 +289,36 @@ document.querySelectorAll("#mode button").forEach(btn=>btn.onclick=()=>{
 });
 const sel=document.getElementById("preset");
 Object.keys(MAZES).forEach(k=>sel.add(new Option(k,k)));
-sel.onchange=()=>{ maze=parse(MAZES[sel.value]); reset(); };
-maze=parse(MAZES[sel.value]); reset();
+// ---- neighbors() explainer ----
+let nbSel;
+function renderNb(){
+  const b=document.getElementById("nbBoard");
+  b.style.gridTemplateColumns=`repeat(${maze.w},36px)`;
+  const [sr,sc]=nbSel;
+  const cands=[["up",sr-1,sc],["down",sr+1,sc],["left",sr,sc-1],["right",sr,sc+1]].map(([a,r,c])=>{
+    const inb=r>=0&&r<maze.h&&c>=0&&c<maze.w;
+    const why=!inb?"out of bounds":maze.walls[r][c]?"wall":"";
+    return {a,r,c,why};
+  });
+  const verdict={}; cands.forEach(x=>verdict[key(x.r,x.c)]=x.why?"bad":"ok");
+  b.innerHTML="";
+  for(let i=0;i<maze.h;i++)for(let j=0;j<maze.w;j++){
+    const d=document.createElement("div"), k=key(i,j);
+    d.className="c"+(maze.walls[i][j]?" wall":"");
+    if(i===sr&&j===sc) d.classList.add("sel");
+    else if(verdict[k]) d.classList.add(verdict[k]);
+    if(i===maze.start[0]&&j===maze.start[1]) d.textContent="A";
+    if(i===maze.goal[0]&&j===maze.goal[1]) d.textContent="B";
+    d.onclick=()=>{ if(!maze.walls[i][j]){ nbSel=[i,j]; renderNb(); } };
+    b.appendChild(d);
+  }
+  document.getElementById("nbSel").textContent=`(${sr}, ${sc})`;
+  document.getElementById("nbTable").innerHTML=
+    "<tr><th>action</th><th>candidate</th><th>result</th></tr>"+
+    cands.map(x=>`<tr><td>${x.a}</td><td>(${x.r}, ${x.c})</td><td class="${x.why?"bad":"ok"}">${x.why?"✗ "+x.why:"✓ valid"}</td></tr>`).join("");
+}
+sel.onchange=()=>{ maze=parse(MAZES[sel.value]); nbSel=[...maze.start]; renderNb(); reset(); };
+maze=parse(MAZES[sel.value]); nbSel=[...maze.start]; renderNb(); reset();
 </script>
 </body>
 </html>
