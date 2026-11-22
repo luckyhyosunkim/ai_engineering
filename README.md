@@ -37,6 +37,30 @@ souce from [here](https://www.youtube.com/watch?v=uKbw2Lfn3wI)
    - 여러 AI에게 역할을 나누는 것을 넘어서, 업무 전체가 어떤 조건과 경로로 움직일지 설계하는 엔지니어링. AI와 기존 프로그램 (검사), 사람을 모두 포함해 전체 업무의 순서와 조건, 경로를 설계하는 것.
    - ex. AI가 홈페이지를 만들면, 단순한 검사는 일반 프로그램을 쓰고, 중요한 의사결정은 사람만이 할 수 있도록 설계하는 것.
 
+6. Reverse Engineering
+
+
+## MCP
+### Step-by-Step Request Flow (Host → MCP Server → Email Backend)
+1. **Host (Your Python App + LLM)**: Your LLM decides it needs to send the morning digest and outputs a structured tool call (`send_message`).
+2. **MCP Client (Inside Your Host)**: Your Python script's MCP client wraps that instruction in a standard JSON-RPC message over `stdio` or `HTTP` and sends it to the MCP server.
+3. **MCP Server (The Translator)**: The MCP server receives the standardized MCP request, attaches your stored credentials (OAuth token or API key), and translates it into a native backend API call.  
+4. **Actual Email Backend (Gmail vs. AgentMail)**:
+   - Option A: **Gmail MCP Server** ("Sending a letter to yourself"):
+      -  You grant the Gmail MCP Server permission (via Google OAuth login) to control your Gmail account.
+      - When your Python app tells the MCP Server to send the morning news, the MCP Server calls Google's Gmail API.
+      - Google's mail servers send the email from `you@gmail.com` to `you@gmail.com`.
+   - *Why there's a catch*: Giving an AI full permission to send emails from your real personal account is risky (if something goes wrong, it could email anyone as you), and setting up Google OAuth tokens for a daily cron job takes extra steps.
+
+   - Option B: **[AgentMail](https://docs.agentmail.to/welcome) MCP Server** ("Hiring an assistant with their own email address")
+      - You create a separate email address for your AI bot on AgentMail, such as `my-tech-bot@agentmail.to`.
+      - When your Python app tells AgentMail's MCP Server to send the morning news, AgentMail's own mail servers send the email from `my-tech-bot@agentmail.to` to `you@gmail.com`.
+      - Because all email providers use the universal SMTP(Simple Mail Transfer Protocol) protocol, AgentMail's outgoing mail server delivers the message straight into your Gmail incoming mail server—just like when a friend on Naver or Outlook emails your Gmail.
+
+      *Just as HTTP is the shared language that allows any web browser to load pages from any web server, SMTP is the shared language that allows different email providers (like AgentMail, Gmail, Naver, or Outlook) to hand off messages to one another reliably across the internet.*
+
 ## Study link
 
 - [AI engineering from scratch](https://github.com/rohitg00/ai-engineering-from-scratch)
+- [Awesome-mcp-server](https://github.com/punkpeye/awesome-mcp-servers?tab=readme-ov-file#file-systems)
+- [Smithery](https://www.smithery.ai/)
