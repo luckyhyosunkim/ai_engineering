@@ -4,6 +4,14 @@
 
 - Rag: Retrieval-Augmented Generation. 문서의 정보를 가져와서 검색 결과의 정확도를 올리는 것.
 
+## Good to know
+
+1. Python with Numpy and Panda:
+   - a Python **list** is a general-purpose **container**
+   - a NumPy **array** is designed for **numerical computation**
+     - **Vectorization**: Instead of writing a loop to process each element individually, NumPy performs operations across the entire array.
+   - a Panda **DataFrame** can conveniently hold different data types in different columns. (Series are One-dimensional labeled data.)
+
 ## Engineering timeline
 
 souce from [here](https://www.youtube.com/watch?v=uKbw2Lfn3wI)
@@ -39,25 +47,26 @@ souce from [here](https://www.youtube.com/watch?v=uKbw2Lfn3wI)
 
 6. Reverse Engineering
 
-
 ## MCP
+
 ### Step-by-Step Request Flow (Host → MCP Server → Email Backend)
+
 1. **Host (Your Python App + LLM)**: Your LLM decides it needs to send the morning digest and outputs a structured tool call (`send_message`).
 2. **MCP Client (Inside Your Host)**: Your Python script's MCP client wraps that instruction in a standard JSON-RPC message over `stdio` or `HTTP` and sends it to the MCP server.
-3. **MCP Server (The Translator)**: The MCP server receives the standardized MCP request, attaches your stored credentials (OAuth token or API key), and translates it into a native backend API call.  
+3. **MCP Server (The Translator)**: The MCP server receives the standardized MCP request, attaches your stored credentials (OAuth token or API key), and translates it into a native backend API call.
 4. **Actual Email Backend (Gmail vs. AgentMail)**:
    - Option A: **Gmail MCP Server** ("Sending a letter to yourself"):
-      -  You grant the Gmail MCP Server permission (via Google OAuth login) to control your Gmail account.
-      - When your Python app tells the MCP Server to send the morning news, the MCP Server calls Google's Gmail API.
-      - Google's mail servers send the email from `you@gmail.com` to `you@gmail.com`.
-   - *Why there's a catch*: Giving an AI full permission to send emails from your real personal account is risky (if something goes wrong, it could email anyone as you), and setting up Google OAuth tokens for a daily cron job takes extra steps.
+     - You grant the Gmail MCP Server permission (via Google OAuth login) to control your Gmail account.
+     - When your Python app tells the MCP Server to send the morning news, the MCP Server calls Google's Gmail API.
+     - Google's mail servers send the email from `you@gmail.com` to `you@gmail.com`.
+   - _Why there's a catch_: Giving an AI full permission to send emails from your real personal account is risky (if something goes wrong, it could email anyone as you), and setting up Google OAuth tokens for a daily cron job takes extra steps.
 
    - Option B: **[AgentMail](https://docs.agentmail.to/welcome) MCP Server** ("Hiring an assistant with their own email address")
-      - You create a separate email address for your AI bot on AgentMail, such as `my-tech-bot@agentmail.to`.
-      - When your Python app tells AgentMail's MCP Server to send the morning news, AgentMail's own mail servers send the email from `my-tech-bot@agentmail.to` to `you@gmail.com`.
-      - Because all email providers use the universal SMTP(Simple Mail Transfer Protocol) protocol, AgentMail's outgoing mail server delivers the message straight into your Gmail incoming mail server—just like when a friend on Naver or Outlook emails your Gmail.
+     - You create a separate email address for your AI bot on AgentMail, such as `my-tech-bot@agentmail.to`.
+     - When your Python app tells AgentMail's MCP Server to send the morning news, AgentMail's own mail servers send the email from `my-tech-bot@agentmail.to` to `you@gmail.com`.
+     - Because all email providers use the universal SMTP(Simple Mail Transfer Protocol) protocol, AgentMail's outgoing mail server delivers the message straight into your Gmail incoming mail server—just like when a friend on Naver or Outlook emails your Gmail.
 
-      *Just as HTTP is the shared language that allows any web browser to load pages from any web server, SMTP is the shared language that allows different email providers (like AgentMail, Gmail, Naver, or Outlook) to hand off messages to one another reliably across the internet.*
+     _Just as HTTP is the shared language that allows any web browser to load pages from any web server, SMTP is the shared language that allows different email providers (like AgentMail, Gmail, Naver, or Outlook) to hand off messages to one another reliably across the internet._
 
 ## Study link
 
